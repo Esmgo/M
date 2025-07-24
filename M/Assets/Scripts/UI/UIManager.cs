@@ -18,7 +18,8 @@ public class UIManager : MonoBehaviour
 
     public void Init()
     {
-        //RegisterPanel("MainPanel", "MainPanel");
+        RegisterPanel("MainPanel", "MainPanel");
+        RegisterPanel("NetGamePanel", "NetGamePanel");  
         //RegisterPanel("SelectRolePanel", "SelectRolePanel");
         //RegisterPanel("PausePanel", "PausePanel");
         //RegisterPanel("NetworkPanel", "NetworkPanel");

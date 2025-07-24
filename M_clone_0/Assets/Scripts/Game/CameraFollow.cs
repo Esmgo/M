@@ -49,13 +49,20 @@ public class CameraFollow : MonoBehaviour
     {
         // 只跟随本地玩家
         var localPlayer = FindObjectsOfType<Move>();
-        foreach (var player in localPlayer)
+        if (NetworkState.IsOnline)
         {
-            if (player.isLocalPlayer) // 确保是本地玩家
+            foreach (var player in localPlayer)
             {
-                target = player.transform;
-                break;
+                if (player.isLocalPlayer) // 确保是本地玩家
+                {
+                    target = player.transform;
+                    break;
+                }
             }
+        }
+        else
+        {
+            target = localPlayer[0].transform; // 离线模式下跟随第一个玩家
         }
     }
 }

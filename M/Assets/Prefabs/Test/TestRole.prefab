@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 8639939073782512783}
   - component: {fileID: -8110463129160286968}
   - component: {fileID: -5728985745351572275}
+  - component: {fileID: 1576710422437595917}
   m_Layer: 0
   m_Name: TestRole
   m_TagString: Untagged
@@ -99,7 +100,7 @@ CircleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5628354203942823538}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -257,6 +258,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0a9ba5d79fad104ebfe93515d2f448d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1576710422437595917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5628354203942823538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dde4c8751ce0f240b01a28d945f36b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  bulletPrefab: {fileID: 2758673232787013098, guid: 6c7f7c530a5d7bd429d775545b32f3a7, type: 3}
+  firePoint: {fileID: 3233269825564598253}
+  fireRate: 0.1
 --- !u!1001 &5377810884807344919
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -334,6 +353,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 4843985084834002234, guid: c7e9ef9f0f3908749b73e71124476717, type: 3}
+--- !u!4 &3233269825564598253 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1837693741466411782, guid: c7e9ef9f0f3908749b73e71124476717, type: 3}
+  m_PrefabInstance: {fileID: 5377810884807344919}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6741330686667274953 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -7552582706839291426, guid: c7e9ef9f0f3908749b73e71124476717, type: 3}

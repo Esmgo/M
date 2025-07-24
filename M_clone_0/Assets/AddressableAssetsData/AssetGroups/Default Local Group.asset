@@ -17,8 +17,18 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: ae219d63c01fd354ba0ad3dab60c53fe
   m_SerializeEntries:
+  - m_GUID: 2700829804d8e5d4d9f65672d12c1433
+    m_Address: NetGamePanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 311849b197fc33b48a2a162ac3176ddc
     m_Address: TestRole
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec78e6e5b287eb74d82f5e20ca113300
+    m_Address: MainPanel
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

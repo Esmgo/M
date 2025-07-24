@@ -34,14 +34,32 @@ public class Move : NetworkBehaviour
 
     private void Start()
     {
-        //测试
-        //cam.GetComponent<CameraFollow>().target = transform;
         cam.GetComponent<CameraFollow>().SetTarget(); // 设置摄像头跟随目标为本地玩家
     }
 
     void Update()
     {
-        if (!isLocalPlayer) return; // 只处理本地玩家的输入
+        if (!isLocalPlayer && NetworkClient.active) return;
+            HandleInput();
+            FlipByMouse();
+            UpdateAnimation();
+    }
+
+    [Command]
+    private void CmdSyncSpeed(float speed)
+    {
+        syncedSpeed = speed;
+    }
+
+    void FixedUpdate()
+    {
+        HandleMovement();     
+    }
+
+
+
+    private void HandleInput()
+    {
         // 获取移动输入
         moveInput.x = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
         moveInput.y = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
@@ -54,32 +72,9 @@ public class Move : NetworkBehaviour
             dashTimeLeft = dashDuration;
             lastDashTime = Time.time;
         }
-
-        // 鼠标位置反转
-        FlipByMouse();
-
-        // 计算速度并设置动画参数
-        float speed = rb.velocity.magnitude;
-        animator.SetFloat("Speed", speed);
-
-        // 同步速度到服务器
-        if (isServer)
-        {
-            syncedSpeed = speed;
-        }
-        else
-        {
-            CmdSyncSpeed(speed);
-        }
     }
 
-    [Command]
-    private void CmdSyncSpeed(float speed)
-    {
-        syncedSpeed = speed;
-    }
-
-    void FixedUpdate()
+    private void HandleMovement()
     {
         Vector2 targetVelocity = isDashing ? moveInput * dashSpeed : moveInput * moveSpeed;
         rb.velocity = targetVelocity;
@@ -92,11 +87,29 @@ public class Move : NetworkBehaviour
                 isDashing = false;
             }
         }
-
         // 在客户端更新动画参数
         if (!isLocalPlayer)
         {
             animator.SetFloat("Speed", syncedSpeed);
+        }
+    }
+
+    private void UpdateAnimation()
+    {
+        float speed = rb.velocity.magnitude;
+        animator.SetFloat("Speed", speed);
+
+        // 同步速度到服务器
+        if (NetworkState.IsOnline)
+        {
+            if (isServer)
+            {
+                syncedSpeed = speed;
+            }
+            else
+            {
+                CmdSyncSpeed(speed);
+            }
         }
     }
 
