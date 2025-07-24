@@ -5,13 +5,5 @@ using UnityEngine;
 
 public class GameNetworkManager : NetworkManager
 {
-    public override void Start()
-    {
-        
-    }
-
-    public override void Update()
-    {
-        
-    }
+    public bool isOnline { get; private set; }
 }
