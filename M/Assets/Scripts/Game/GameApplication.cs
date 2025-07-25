@@ -6,6 +6,7 @@ using UnityEngine;
 public class GameApplication : MonoBehaviour
 {
     public GameObject BulletTest;
+    public GameObject EnemyTestt;
 
 
     #region µ¥ÀýÊµÏÖ
@@ -44,15 +45,17 @@ public class GameApplication : MonoBehaviour
         DOTween.Init();
         PoolInit();
         UIManager.Instance.Init();
+        EnemyManager.Instance.summonController = false; 
         await UIManager.Instance.OpenPanelAsync<MainPanel>("MainPanel");    
     }
 
 
     private void PoolInit()
     {
-        ObjectPoolManager.Instance.CreatePool(BulletTest, "BulletOnline", true, 1);
-        Debug.Log(ObjectPoolManager.Instance.GetPoolStatus());
+        ObjectPoolManager.Instance.CreatePool(BulletTest, "BulletOnline", true, 0);
         ObjectPoolManager.Instance.CreatePool(BulletTest, "BulletOffline", false, 0);
+        ObjectPoolManager.Instance.CreatePool(EnemyTestt, "EnemyOnline", true, 0);
+        ObjectPoolManager.Instance.CreatePool(EnemyTestt, "EnemyOffline", false, 0);
         Debug.Log(ObjectPoolManager.Instance.GetPoolStatus());
     }
 }

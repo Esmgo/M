@@ -54,9 +54,13 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   speed: 10
-  lifetime: 5
+  lifetime: 2
   damage: 10
   rb: {fileID: 845487117025105411}
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  enemyTag: Enemy
 --- !u!114 &535343718150836243
 MonoBehaviour:
   m_ObjectHideFlags: 0

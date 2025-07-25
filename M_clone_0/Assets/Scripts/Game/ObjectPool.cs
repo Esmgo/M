@@ -71,15 +71,45 @@ public class ObjectPool
         var poolObj = obj.GetComponent<PoolObject>();
         poolObj.isInPool = false;
 
+        // 先设置位置和旋转
         obj.transform.position = position;
         obj.transform.rotation = rotation;
-        obj.SetActive(true);
-
-        // 调用IPoolable接口
+        
+        // 重置物理状态
+        var rb = obj.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.WakeUp();
+        }
+        
+        // 重新启用碰撞器
+        var colliders = obj.GetComponentsInChildren<Collider2D>();
+        foreach (var col in colliders)
+        {
+            col.enabled = true;
+        }
+        
+        // 调用IPoolable接口的OnSpawn（在激活前）
         IPoolItem[] poolables = obj.GetComponentsInChildren<IPoolItem>();
         foreach (var poolable in poolables)
         {
             poolable.OnSpawn();
+        }
+        
+        // 最后激活对象
+        obj.SetActive(true);
+
+        // 网络对象需要额外处理
+        if (networkSynced && NetworkServer.active)
+        {
+            var netIdentity = obj.GetComponent<NetworkIdentity>();
+            if (netIdentity != null && !netIdentity.isServer)
+            {
+                // 确保网络对象正确同步
+                NetworkServer.Spawn(obj);
+            }
         }
 
         return obj;
@@ -93,17 +123,40 @@ public class ObjectPool
             Debug.LogError($"Attempting to return object to wrong pool. Expected pool: {prefab.name}, Object pool: {poolObj?.poolKey}");
             return;
         }
-
-        obj.SetActive(false);
-        poolObj.isInPool = true;
-        pool.Enqueue(obj);
-
-        // 调用IPoolable接口
+        
+        // 先调用OnReturn进行清理
         IPoolItem[] poolables = obj.GetComponentsInChildren<IPoolItem>();
         foreach (var poolable in poolables)
         {
             poolable.OnReturn();
         }
+        
+        // 禁用所有碰撞器
+        var colliders = obj.GetComponentsInChildren<Collider2D>();
+        foreach (var col in colliders)
+        {
+            col.enabled = false;
+        }
+        
+        // 重置物理状态
+        var rb = obj.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.Sleep();
+        }
+        
+        // 移动到屏幕外
+        obj.transform.position = new Vector3(0, -1000, 0);
+        
+        // 停用对象
+        obj.SetActive(false);
+        
+        poolObj.isInPool = true;
+        pool.Enqueue(obj);
+        
+        Debug.Log($"Object {obj.name} returned to pool at position {obj.transform.position}");
     }
 
     public void Clear()
