@@ -163,16 +163,14 @@ public class HPBar : NetworkBehaviour
 
         if (syncCurrentHp <= 0)
         {
-            // 在服务器端处理敌人死亡，确保网络同步
-            if (ObjectPoolManager.Instance != null)
+            // 通知WaveManager敌人死亡
+            if (WaveManager.Instance != null)
             {
-                // 延迟一帧执行，确保HP同步完成
-                StartCoroutine(DelayedReturn());
+                WaveManager.Instance.OnEnemyDeath(transform.position);
             }
-            else
-            {
-                Debug.LogError("ObjectPoolManager.Instance is null when trying to return enemy");
-            }
+
+            // 延迟回收确保网络同步
+            StartCoroutine(DelayedReturn());
         }
     }
 
@@ -187,6 +185,9 @@ public class HPBar : NetworkBehaviour
 
         if (_currentHp <= 0)
         {
+            // 离线模式下生成经验球
+            SpawnExpBallOffline();
+            
             // 在离线模式下直接回收
             if (ObjectPoolManager.Instance != null)
             {
@@ -199,10 +200,40 @@ public class HPBar : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// 离线模式下生成经验球
+    /// </summary>
+    private void SpawnExpBallOffline()
+    {
+        try
+        {
+            if (ObjectPoolManager.Instance != null)
+            {
+                GameObject expBall = ObjectPoolManager.Instance.Spawn("ExpBallOffline", transform.position, Quaternion.identity);
+                if (expBall != null)
+                {
+                    Debug.Log($"Spawned offline exp ball at {transform.position}");
+                }
+                else
+                {
+                    Debug.LogError("Failed to spawn offline exp ball");
+                }
+            }
+            else
+            {
+                Debug.LogError("ObjectPoolManager.Instance is null when trying to spawn exp ball");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to spawn exp ball in offline mode: {e.Message}");
+        }
+    }
+
     // 添加延迟回收协程，确保网络同步完成
     private IEnumerator DelayedReturn()
     {
-        yield return null; // 等待一帧
+        yield return null; // 等待一帧确保同步
         ObjectPoolManager.Instance.Return(gameObject);
     }
 

@@ -46,11 +46,9 @@ public class Bullet : NetworkBehaviour, IPoolItem
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log("1");
         // 检查碰撞对象是否是敌人
         if (IsEnemy(collision))
         {
-            Debug.Log("2");
 
             // 在服务器上或者在离线模式下处理碰撞
             if (isServer || !NetworkClient.active)

@@ -6,10 +6,6 @@ using UnityEngine;
 
 public class GameNetworkManager : NetworkManager
 {
-    
-
-
-
     public static GameNetworkManager Instance { get; private set; }
 
     public override void Awake()
@@ -24,7 +20,6 @@ public class GameNetworkManager : NetworkManager
         DontDestroyOnLoad(gameObject);
     }
 
-
     public void HostStart(string ipAddress = "localhost", ushort port = 7777)
     {
         if (NetworkClient.active || NetworkServer.active)
@@ -32,11 +27,10 @@ public class GameNetworkManager : NetworkManager
             Debug.LogWarning("Cannot start host - already active as client or server");
             return;
         }
-        networkAddress = ipAddress; // 默认地址为本地
+        networkAddress = ipAddress;
         SetPortIfNeeded(port);
         StartHost();
     }
-
 
     public void ClientStart(string ipAddress = "localhost", ushort port = 7777)
     {
@@ -48,9 +42,49 @@ public class GameNetworkManager : NetworkManager
         }
     }
 
-    /// <summary>
-    /// 停止主机(服务器+客户端)
-    /// </summary>
+    // 当主机启动时
+    public override void OnStartHost()
+    {
+        base.OnStartHost();
+        StartNetworkGame();
+    }
+
+    // 当服务器启动时
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        StartNetworkGame();
+    }
+
+    // 添加游戏开始的回调
+    public override void OnServerSceneChanged(string sceneName)
+    {
+        base.OnServerSceneChanged(sceneName);
+        StartNetworkGame();
+    }
+    
+    public override void OnClientConnect()
+    {
+        base.OnClientConnect();
+        
+        // 如果是主机模式，确保游戏逻辑启动
+        if (NetworkServer.active && NetworkClient.active)
+        {
+            StartNetworkGame();
+        }
+    }
+    
+    private void StartNetworkGame()
+    {
+        // 启用敌人生成（只在服务器端）
+        if (NetworkServer.active && EnemyManager.Instance != null)
+        {
+            EnemyManager.Instance.summonController = true;
+            EnemyManager.Instance.useNetwork = true; // 确保网络模式
+            Debug.Log("网络游戏：已启用敌人生成");
+        }
+    }
+
     public void HostStop()
     {
         if (NetworkServer.active && NetworkClient.active)
@@ -59,9 +93,6 @@ public class GameNetworkManager : NetworkManager
         }
     }
 
-    /// <summary>
-    /// 停止客户端
-    /// </summary>
     public void ClientStop()
     {
         if (NetworkClient.active)
@@ -69,7 +100,6 @@ public class GameNetworkManager : NetworkManager
             StopClient();
         }
     }
-
 
     #region 端口设置方法
     private void SetPortIfNeeded(ushort? port)

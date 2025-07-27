@@ -7,6 +7,7 @@ public class GameApplication : MonoBehaviour
 {
     public GameObject BulletTest;
     public GameObject EnemyTestt;
+    public GameObject ExpBallPrefab; // 添加经验球预制体引用
 
 
     #region 单例实现
@@ -56,6 +57,11 @@ public class GameApplication : MonoBehaviour
         ObjectPoolManager.Instance.CreatePool(BulletTest, "BulletOffline", false, 0);
         ObjectPoolManager.Instance.CreatePool(EnemyTestt, "EnemyOnline", true, 0);
         ObjectPoolManager.Instance.CreatePool(EnemyTestt, "EnemyOffline", false, 0);
+        
+        // 添加经验球对象池
+        ObjectPoolManager.Instance.CreatePool(ExpBallPrefab, "ExpBallOnline", true, 0);
+        ObjectPoolManager.Instance.CreatePool(ExpBallPrefab, "ExpBallOffline", false, 0);
+        
         Debug.Log(ObjectPoolManager.Instance.GetPoolStatus());
     }
 }

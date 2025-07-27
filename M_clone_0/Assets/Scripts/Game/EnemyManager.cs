@@ -8,7 +8,6 @@ public class EnemyManager : MonoBehaviour
     public bool summonController = false;
     public bool useNetwork = true; // 是否使用网络功能
 
-
     private float summonInterval = 2f; // 召唤间隔时间
     private float lastSummonTime = 0f; // 上次召唤时间
 
@@ -23,13 +22,14 @@ public class EnemyManager : MonoBehaviour
                 _instance = FindObjectOfType<EnemyManager>();
                 if (_instance == null)
                 {
-                    Debug.LogError("缺少“EnemyManager”！！！");
+                    Debug.LogError("缺少\"EnemyManager\"！！！");
                 }
             }
             return _instance;
         }
     }
-#endregion
+    #endregion
+    
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -45,10 +45,13 @@ public class EnemyManager : MonoBehaviour
 
     private void Update()
     {
-        // 只有服务器端或离线模式才能生成敌人
+        // 检查是否应该生成敌人
+        if (!summonController) return;
+        
+        // 网络模式：只有服务器端才能生成敌人
         if (useNetwork && !NetworkServer.active) return;
         
-        if(summonController && Time.time >= lastSummonTime + summonInterval)
+        if (Time.time >= lastSummonTime + summonInterval)
         {
             TrySpawnEnemy();
             lastSummonTime = Time.time;
@@ -66,7 +69,7 @@ public class EnemyManager : MonoBehaviour
             }
 
             string poolKey;
-            if (NetworkServer.active)
+            if (useNetwork && NetworkServer.active)
             {
                 poolKey = "EnemyOnline";
             }
@@ -86,7 +89,7 @@ public class EnemyManager : MonoBehaviour
             
             if (enemy != null)
             {
-                Debug.Log($"Successfully spawned enemy: {enemy.name} at {spawnPosition} (Server: {NetworkServer.active})");
+                Debug.Log($"Successfully spawned enemy: {enemy.name} at {spawnPosition} (Network: {useNetwork}, Server: {NetworkServer.active})");
             }
             else
             {

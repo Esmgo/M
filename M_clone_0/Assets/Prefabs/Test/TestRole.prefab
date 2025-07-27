@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: -8110463129160286968}
   - component: {fileID: -5728985745351572275}
   - component: {fileID: 1576710422437595917}
+  - component: {fileID: 7392921220083836805}
   m_Layer: 0
   m_Name: TestRole
   m_TagString: Player
@@ -276,6 +277,29 @@ MonoBehaviour:
   bulletPrefab: {fileID: 2758673232787013098, guid: 6c7f7c530a5d7bd429d775545b32f3a7, type: 3}
   firePoint: {fileID: 3233269825564598253}
   fireRate: 0.1
+--- !u!114 &7392921220083836805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5628354203942823538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19a50a1340bf5cb47b8aac39b9a304dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  currentLevel: 1
+  currentExp: 0
+  baseExpRequired: 100
+  expGrowthRate: 1.2
+  moveSpeedBonus: 0
+  attackSpeedBonus: 0
+  damageBonus: 0
+  healthBonus: 0
 --- !u!1001 &5377810884807344919
 PrefabInstance:
   m_ObjectHideFlags: 0

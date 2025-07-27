@@ -13,6 +13,9 @@ public class MainPanel : UIPanel
             if (loadedObject != null)
             {
                 Instantiate(loadedObject, Vector3.zero, Quaternion.identity);
+                
+                // 启动离线游戏逻辑
+                StartOfflineGame();
             }
             else
             {
@@ -26,5 +29,16 @@ public class MainPanel : UIPanel
             await UIManager.Instance.OpenPanelAsync<NetGamePanel>("NetGamePanel");
             UIManager.Instance.ClosePanel("MainPanel");
         });
+    }
+    
+    private void StartOfflineGame()
+    {
+        // 启用敌人生成
+        if (EnemyManager.Instance != null)
+        {
+            EnemyManager.Instance.summonController = true;
+            EnemyManager.Instance.useNetwork = false; // 确保离线模式
+            Debug.Log("离线游戏：已启用敌人生成");
+        }
     }
 }

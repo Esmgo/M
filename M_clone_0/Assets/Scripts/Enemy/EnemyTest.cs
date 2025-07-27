@@ -6,34 +6,27 @@ using UnityEngine;
 public class EnemyTest : NetworkBehaviour, IPoolItem
 {
     [Header("敌人设置")]
-    public float moveSpeed = 2f; // 敌人移动速度
-    public float detectionRange = 5f; // 敌人检测范围
-    public float updateTargetInterval = 0.5f; // 更新间隔时间
-     
+    public float moveSpeed = 2f;
+    public float detectionRange = 5f;
+    public float updateTargetInterval = 0.5f;
+
     [Header("Network Settings")]
     [Tooltip("是否使用网络功能")]
     public bool useNetwork = true;
     [SyncVar] private NetworkIdentity targetPlayerNet;
 
-    // 添加敌人状态同步变量，类似子弹的 isActive
+    // 参考Bullet添加同步状态
     [SyncVar(hook = nameof(OnEnemyActiveStateChanged))]
     private bool isEnemyActive = false;
-
-    // 添加位置同步变量
-    [SyncVar(hook = nameof(OnPositionChanged))]
-    private Vector3 syncPosition = Vector3.zero;
 
     private Transform targetPlayer;
     private Rigidbody2D rb;
     private float lastUpdateTime;
     public HPBar hPBar;
-
-    // 组件初始化标志
     private bool isComponentsInitialized = false;
 
     private void Awake()
     {
-        // 在Awake中初始化组件引用，确保早于OnSpawn调用
         InitializeComponents();
     }
 
@@ -41,7 +34,6 @@ public class EnemyTest : NetworkBehaviour, IPoolItem
     {
         InitializeComponents();
 
-        // 自动检测是否使用网络功能
         if (useNetwork && NetworkState.IsOffline)
         {
             useNetwork = false;
@@ -51,33 +43,158 @@ public class EnemyTest : NetworkBehaviour, IPoolItem
 
     void FixedUpdate()
     {
-        // 如果敌人未激活，不执行AI逻辑
+        // 只有激活状态才执行AI
         if (useNetwork && !isEnemyActive) return;
-
-        // 服务器端或离线模式执行AI逻辑
         if (useNetwork && !isServer) return;
 
-        // 限制目标更新频率
         if (Time.time - lastUpdateTime > updateTargetInterval)
         {
             FindClosestPlayer();
             lastUpdateTime = Time.time;
         }
 
-        // 移动逻辑
         if (GetCurrentTarget() != null && rb != null)
         {
             Vector2 direction = (GetCurrentTarget().position - transform.position).normalized;
             rb.velocity = direction * moveSpeed;
-
-            // 服务器端同步位置
-            if (useNetwork && isServer)
-            {
-                syncPosition = transform.position;
-            }
         }
     }
 
+    // 参考Bullet的状态同步钩子
+    private void OnEnemyActiveStateChanged(bool oldValue, bool newValue)
+    {
+        if (oldValue != newValue)
+        {
+            gameObject.SetActive(newValue);
+            Debug.Log($"Enemy {gameObject.name} active state changed: {oldValue} -> {newValue}");
+        }
+    }
+
+    // 参考Bullet的RPC方法
+    [ClientRpc]
+    private void RpcSetEnemyActive(bool state)
+    {
+        if (!state)
+        {
+            // 移动到屏幕外，避免闪烁
+            transform.position = new Vector3(0, -1000, 0);
+        }
+        gameObject.SetActive(state);
+    }
+
+    public void OnSpawn()
+    {
+        InitializeComponents();
+
+        if (hPBar != null)
+        {
+            hPBar.ResetToFull();
+        }
+
+        // 重置状态
+        targetPlayer = null;
+        targetPlayerNet = null;
+        lastUpdateTime = 0f;
+
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        // 参考Bullet的激活逻辑
+        if (!NetworkClient.active)
+        {
+            // 离线模式
+            isEnemyActive = true;
+        }
+        else if (isServer)
+        {
+            // 服务器端，同步激活状态
+            isEnemyActive = true;
+            RpcSetEnemyActive(true);
+        }
+
+        Debug.Log($"Enemy {gameObject.name} spawned at {transform.position}");
+    }
+
+    public void OnReturn()
+    {
+        // 参考Bullet的停用逻辑
+        if (!NetworkClient.active)
+        {
+            isEnemyActive = false;
+        }
+        else if (isServer)
+        {
+            isEnemyActive = false;
+            RpcSetEnemyActive(false);
+        }
+
+        if (hPBar != null)
+        {
+            hPBar.ResetState();
+        }
+
+        // 清理状态
+        targetPlayer = null;
+        targetPlayerNet = null;
+        lastUpdateTime = 0f;
+
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        Debug.Log($"Enemy {gameObject.name} returned to pool");
+    }
+
+    public void Reset()
+    {
+        if (hPBar != null)
+        {
+            hPBar.ResetState();
+        }
+
+        targetPlayer = null;
+        targetPlayerNet = null;
+        lastUpdateTime = 0f;
+        isEnemyActive = false;
+
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+    }
+
+    public void Init()
+    {
+        InitializeComponents();
+    }
+
+    private void InitializeComponents()
+    {
+        if (isComponentsInitialized) return;
+
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (hPBar == null) hPBar = GetComponent<HPBar>();
+
+        if (rb == null)
+        {
+            Debug.LogError($"EnemyTest: Missing Rigidbody2D component on {gameObject.name}");
+        }
+
+        if (hPBar == null)
+        {
+            Debug.LogError($"EnemyTest: Missing HPBar component on {gameObject.name}");
+        }
+
+        isComponentsInitialized = true;
+    }
+
+    // 其他方法保持不变...
     void FindClosestPlayer()
     {
         GameObject[] players;
@@ -109,7 +226,6 @@ public class EnemyTest : NetworkBehaviour, IPoolItem
                 closestDistance = distance;
                 closestPlayer = player.transform;
 
-                // 网络模式下同时设置SyncVar
                 if (useNetwork && isServer)
                 {
                     var netIdentity = player.GetComponent<NetworkIdentity>();
@@ -133,179 +249,6 @@ public class EnemyTest : NetworkBehaviour, IPoolItem
         return targetPlayer;
     }
 
-    // 网络同步钩子方法 - 类似子弹的 OnActiveStateChanged
-    private void OnEnemyActiveStateChanged(bool oldValue, bool newValue)
-    {
-        if (oldValue != newValue)
-        {
-            gameObject.SetActive(newValue);
-            Debug.Log($"Enemy {gameObject.name} active state changed: {oldValue} -> {newValue}");
-        }
-    }
-
-    // 位置同步钩子方法
-    private void OnPositionChanged(Vector3 oldValue, Vector3 newValue)
-    {
-        if (!isServer && useNetwork)
-        {
-            transform.position = newValue;
-        }
-    }
-
-    // 类似子弹的 RpcSetActive 方法
-    [ClientRpc]
-    private void RpcSetEnemyActive(bool state)
-    {
-        if (!state)
-        {
-            // 移动到屏幕外，类似子弹的处理
-            transform.position = new Vector3(0, -1000, 0);
-        }
-        gameObject.SetActive(state);
-        Debug.Log($"Enemy {gameObject.name} RPC set active: {state}");
-    }
-
-    public void OnSpawn()
-    {
-        // 确保组件已初始化
-        InitializeComponents();
-
-        // 重置血条到满血状态
-        if (hPBar != null)
-        {
-            hPBar.ResetToFull();
-        }
-        else
-        {
-            Debug.LogError($"EnemyTest.OnSpawn: hPBar is null on {gameObject.name}");
-        }
-
-        // 重置AI状态
-        targetPlayer = null;
-        targetPlayerNet = null;
-        lastUpdateTime = 0f;
-
-        // 重置物理状态
-        if (rb != null)
-        {
-            rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
-
-        // 网络同步激活状态 - 类似子弹的处理
-        if (!NetworkClient.active)
-        {
-            // 离线模式：直接激活
-            isEnemyActive = true;
-        }
-        else if (isServer)
-        {
-            // 在线模式的服务器端
-            isEnemyActive = true;
-            syncPosition = transform.position; // 同步位置
-            RpcSetEnemyActive(true); // 在所有客户端上设置激活状态
-        }
-
-        Debug.Log($"Enemy {gameObject.name} spawned at {transform.position}");
-    }
-
-    public void OnReturn()
-    {
-        // 网络同步停用状态 - 类似子弹的处理
-        if (!NetworkClient.active)
-        {
-            // 离线模式：直接处理
-            isEnemyActive = false;
-        }
-        else if (isServer)
-        {
-            // 在线模式的服务器端
-            isEnemyActive = false;
-            RpcSetEnemyActive(false); // 在所有客户端上设置停用状态
-        }
-
-        // 重置血条状态
-        if (hPBar != null)
-        {
-            hPBar.ResetState();
-        }
-
-        // 清理其他状态
-        targetPlayer = null;
-        targetPlayerNet = null;
-        lastUpdateTime = 0f;
-
-        // 停止移动
-        if (rb != null)
-        {
-            rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
-
-        Debug.Log($"Enemy {gameObject.name} returned to pool");
-    }
-
-    public void Reset()
-    {
-        // 重置所有状态
-        if (hPBar != null)
-        {
-            hPBar.ResetState();
-        }
-
-        targetPlayer = null;
-        targetPlayerNet = null;
-        lastUpdateTime = 0f;
-        isEnemyActive = false;
-
-        if (rb != null)
-        {
-            rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
-    }
-
-    public void Init()
-    {
-        InitializeComponents();
-    }
-
-    private void InitializeComponents()
-    {
-        if (isComponentsInitialized) return;
-
-        if (rb == null) rb = GetComponent<Rigidbody2D>();
-        if (hPBar == null) hPBar = GetComponent<HPBar>();
-
-        // 验证必要组件
-        if (rb == null)
-        {
-            Debug.LogError($"EnemyTest: Missing Rigidbody2D component on {gameObject.name}");
-        }
-        
-        if (hPBar == null)
-        {
-            Debug.LogError($"EnemyTest: Missing HPBar component on {gameObject.name}");
-        }
-
-        isComponentsInitialized = true;
-    }
-
-    // 可视化调试
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        var currentTarget = GetCurrentTarget();
-        if (currentTarget != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, currentTarget.position);
-        }
-    }
-
-    // 在对象被禁用时确保清理状态
     private void OnDisable()
     {
         if (rb != null)
